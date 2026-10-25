@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+build/
+dist/
+*.spec
+# nunca subir archivos del juego ni guiones con japonés/inglés
+*.dat
+*.webm
+guion_*.csv
+SIN_TRADUCIR*.csv

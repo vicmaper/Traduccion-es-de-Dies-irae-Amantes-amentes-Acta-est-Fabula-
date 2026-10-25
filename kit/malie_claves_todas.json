@@ -1,0 +1,24 @@
+{
+ "Dies irae ~Acta est Fabula~": {
+  "tipo": "cfi",
+  "key": "a4a7a6a1a0a3a2acafaea9a8abaab4b7b6b1b0b3b2bcbfbeb9b8bbbaa1a9b1b9",
+  "rot": [
+   910374247,
+   1748333927,
+   1849778808,
+   1147500905
+  ],
+  "align": 1024
+ },
+ "Dies irae ~Amantes amentes~": {
+  "tipo": "cfi",
+  "key": "a4a7a6a1a0a3a2acafaea9a8abaab4b7b6b1b0b3b2bcbfbeb9b8bbbaa1a9b1b9",
+  "rot": [
+   962934082,
+   1987076967,
+   1766147170,
+   1899184948
+  ],
+  "align": 1024
+ }
+}

@@ -6,11 +6,11 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import di_kit as K
 
-TITULO = 'Dies irae — Traducción al español  v' + K.VERSION
+TITULO = 'Dies irae — Traducción al español  v' + K.VERSION + '  (Amantes amentes · Acta est Fabula · Kaziklu Bey)'
 NOMBRE_JUEGO = 'Dies irae ~Amantes amentes~'
 
-def candidatos():
-    """carpetas típicas de Steam donde puede estar el juego"""
+def candidatos(kb=False):
+    """carpetas típicas de Steam donde puede estar el juego (kb=True: Interview with Kaziklu Bey)"""
     raices = []
     if sys.platform == 'win32':
         for u in 'CDEFGH':
@@ -32,8 +32,15 @@ def candidatos():
             except Exception: pass
     out = []
     for r in raices + extra:
-        p = os.path.join(r, 'steamapps', 'common', NOMBRE_JUEGO)
-        if os.path.isfile(os.path.join(p, 'malie.exe')) and p not in out: out.append(p)
+        com = os.path.join(r, 'steamapps', 'common')
+        if kb:
+            try: subs = [os.path.join(com, x) for x in os.listdir(com) if 'kaziklu' in x.lower() or 'dies irae' in x.lower()]
+            except OSError: subs = []
+            for p in subs:
+                if os.path.isfile(os.path.join(p, 'data.dat')) and K.es_kb(p) and p not in out: out.append(p)
+        else:
+            p = os.path.join(com, NOMBRE_JUEGO)
+            if os.path.isfile(os.path.join(p, 'malie.exe')) and p not in out: out.append(p)
     return out
 
 class Cola(io.TextIOBase):
@@ -65,18 +72,21 @@ class App(tk.Tk):
         ttk.Label(f, text='Funciona con TU copia de Steam. El kit no trae texto del juego: solo el español. '
                           'Antes de cambiar algo guarda respaldo.', style='Nota.TLabel', wraplength=900
                   ).grid(row=1, column=0, columnspan=3, sticky='w', padx=12)
-        ttk.Label(f, text='Carpeta del juego (donde está malie.exe):').grid(row=2, column=0, sticky='w', padx=12, pady=(14, 2))
+        ttk.Label(f, text='Carpeta del juego (donde está malie.exe). Kaziklu Bey es otro juego: elige su carpeta y vuelve a instalar.').grid(row=2, column=0, columnspan=3, sticky='w', padx=12, pady=(14, 2))
         c = candidatos()
         self.v_juego = tk.StringVar(value=c[0] if c else '')
         e = ttk.Entry(f, textvariable=self.v_juego); e.grid(row=3, column=0, sticky='we', padx=(12, 4))
         ttk.Button(f, text='Examinar…', command=self._elegir).grid(row=3, column=1, padx=4)
-        ttk.Button(f, text='Buscar', command=self._buscar).grid(row=3, column=2, padx=(4, 12))
+        bf = ttk.Frame(f); bf.grid(row=3, column=2, padx=(4, 12))
+        ttk.Button(bf, text='Buscar Dies irae', command=self._buscar).pack(side='left')
+        ttk.Button(bf, text='Buscar Kaziklu Bey', command=lambda: self._buscar(True)).pack(side='left', padx=(4, 0))
         self.v_juego.trace_add('write', lambda *a: self._estado())
         self.l_estado = ttk.Label(f, text='', justify='left'); self.l_estado.grid(row=4, column=0, columnspan=3, sticky='w', padx=12, pady=8)
         b = ttk.Frame(f); b.grid(row=5, column=0, columnspan=3, sticky='w', padx=8)
         ttk.Button(b, text='Instalar todo', style='Grande.TButton', command=lambda: self._correr(None)).pack(side='left', padx=4)
         ttk.Button(b, text='Solo Amantes amentes', command=lambda: self._correr('amantes')).pack(side='left', padx=4)
         ttk.Button(b, text='Solo Acta est Fabula', command=lambda: self._correr('acta')).pack(side='left', padx=4)
+        ttk.Button(b, text='Kaziklu Bey', command=lambda: self._correr('kb')).pack(side='left', padx=4)
         ttk.Button(b, text='Quitar traducción', command=self._quitar).pack(side='left', padx=(24, 4))
         ttk.Button(b, text='Abrir carpeta', command=self._abrir).pack(side='left', padx=4)
         ttk.Label(f, text='Registro:').grid(row=6, column=0, sticky='w', padx=12, pady=(10, 0))
@@ -88,10 +98,10 @@ class App(tk.Tk):
         d = filedialog.askdirectory(title='Carpeta del juego (donde está malie.exe)')
         if d: self.v_juego.set(os.path.normpath(d))
 
-    def _buscar(self):
-        c = candidatos()
+    def _buscar(self, kb=False):
+        c = candidatos(kb)
         if c: self.v_juego.set(c[0]); self._escribir('Encontrado: %s\n' % c[0])
-        else: messagebox.showinfo(TITULO, 'No lo encontré solo. Usa «Examinar…».\nEn Steam: clic derecho en Dies irae → Administrar → Ver archivos locales.')
+        else: messagebox.showinfo(TITULO, 'No lo encontré solo. Usa «Examinar…».\nEn Steam: clic derecho en el juego → Administrar → Ver archivos locales.')
 
     def _estado(self):
         j = self.v_juego.get().strip()
@@ -144,6 +154,7 @@ class App(tk.Tk):
         self.v_cual = tk.StringVar(value='acta_es.tsv')
         ttk.Radiobutton(top, text='Acta est Fabula', variable=self.v_cual, value='acta_es.tsv', command=self.ed_cargar).pack(side='left')
         ttk.Radiobutton(top, text='Amantes amentes', variable=self.v_cual, value='amantes_es.tsv', command=self.ed_cargar).pack(side='left', padx=8)
+        ttk.Radiobutton(top, text='Kaziklu Bey', variable=self.v_cual, value='kb_es.tsv', command=self.ed_cargar).pack(side='left')
         ttk.Label(top, text='Buscar:').pack(side='left', padx=(16, 2))
         self.v_buscar = tk.StringVar(); eb = ttk.Entry(top, textvariable=self.v_buscar, width=30); eb.pack(side='left')
         eb.bind('<Return>', lambda e: self.ed_filtrar())
@@ -184,7 +195,9 @@ class App(tk.Tk):
         """lee el inglés de TU juego (solo en memoria, para comparar)"""
         j = self.v_juego.get().strip(); cual = self.v_cual.get()
         try:
-            if cual == 'acta_es.tsv':
+            if cual == 'kb_es.tsv':
+                d = K.malie_dat.Dat(os.path.join(j, 'data.dat')); b = d.data(d.find('data/system/exec.dat'))
+            elif cual == 'acta_es.tsv':
                 d = K.malie_dat.Dat(os.path.join(j, 'data4.dat')); b = d.data(d.find('data/system/exec.dat'))
             else:
                 p = os.path.join(j, 'data4.cn.ORIGINAL.dat')
@@ -217,8 +230,9 @@ class App(tk.Tk):
             return messagebox.showwarning(TITULO, 'Las marcas {…} no coinciden con el original. Revisa {end}, {v:…}{/v}, {u000A}…')
         dst = os.path.join(K.JUNTO, 'datos'); os.makedirs(dst, exist_ok=True)
         src = K.carpeta_datos()
-        for n in ('acta_es.tsv', 'amantes_es.tsv', 'opciones_nombres.tsv'):
-            if not os.path.isfile(os.path.join(dst, n)): shutil.copy2(os.path.join(src, n), os.path.join(dst, n))
+        for n in ('acta_es.tsv', 'amantes_es.tsv', 'kb_es.tsv', 'kb_glos_es.tsv', 'opciones_nombres.tsv'):
+            o = os.path.join(src, n) if os.path.isfile(os.path.join(src, n)) else os.path.join(K.BASE, 'datos', n)
+            if not os.path.isfile(os.path.join(dst, n)) and os.path.isfile(o): shutil.copy2(o, os.path.join(dst, n))
         self.es[self.actual] = t
         p = os.path.join(dst, self.v_cual.get())
         with open(p, 'w', encoding='utf-8', newline='') as fo:
@@ -258,6 +272,11 @@ Steam abre malie.exe, no malie_fabula.exe. Lo que funcionó:
    a compatdata/<número>/pfx/drive_c/users/steamuser/AppData/Roaming/light/ con el nombre «Dies irae ~Amantes amentes~».
    Dentro debe quedar save/global.dat.
 6. Jugar.
+
+INTERVIEW WITH KAZIKLU BEY (otro juego de Steam)
+1. Pulsa «Buscar Kaziklu Bey» (o «Examinar…» y elige su carpeta) y luego «Instalar todo» o «Kaziklu Bey».
+2. El kit agrega data2.dat (no toca nada más). El glosario (menú de juego, clic derecho) también queda en español.
+3. Steam Deck: instala en la PC y copia data2.dat a la carpeta del juego en la Deck, o usa el kit desde la Deck.
 
 Kit sin numpy (Linux): funciona, pero el cifrado puede tardar 10-30 minutos.
 """

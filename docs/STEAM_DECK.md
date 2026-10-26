@@ -22,3 +22,11 @@ de carpeta que lleva «～» japonesas, y en Proton se leen distinto. Lo que fun
 6. Pulsa **Jugar**.
 
 Para ver carpetas ocultas en Dolphin: **Ctrl + H**. Para escribir una ruta: **Ctrl + L**.
+
+# Interview with Kaziklu Bey en la Steam Deck
+
+No hace falta nada especial: el español va en un archivo nuevo, `data2.dat`.
+1. Instálalo con el kit en la PC (o en la Deck, modo escritorio, con `./abrir_kit.sh`).
+2. Si lo instalaste en la PC, copia `data2.dat` a la carpeta del juego en la Deck
+   (`/home/deck/.local/share/Steam/steamapps/common/<carpeta de Kaziklu Bey>/`).
+3. Juega con el botón **Jugar** de Steam. Para volver al inglés, borra o renombra `data2.dat`.

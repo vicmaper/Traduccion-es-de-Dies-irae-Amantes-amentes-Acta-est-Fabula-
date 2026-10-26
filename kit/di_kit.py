@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""di_kit.py - Kit de la traducción al español de Dies irae (Steam: Amantes amentes + parche R18 Acta est Fabula).
+"""di_kit.py - Kit de la traducción al español de Dies irae (Steam: Amantes amentes + parche R18 Acta est Fabula)
+y de Dies irae ~Interview with Kaziklu Bey~ (Steam).
 Funciona con TU copia del juego: lee tus archivos, pone el español encima y guarda respaldo de lo que cambia.
 El kit no trae texto del juego (ni japonés ni inglés): solo el español.
 
 Uso en consola (Windows, Linux o Steam Deck):
   python di_kit.py estado    "CARPETA DEL JUEGO"
-  python di_kit.py instalar  "CARPETA DEL JUEGO" [--solo acta|amantes]
+  python di_kit.py instalar  "CARPETA DEL JUEGO" [--solo acta|amantes|kb]
   python di_kit.py quitar    "CARPETA DEL JUEGO"
   python di_kit.py revisar                         (revisa el formato de los archivos de datos/)
 Sin argumentos abre la ventana (di_gui.py)."""
@@ -18,7 +19,7 @@ else:
 sys.path.insert(0, BASE)
 import malie_dat, malie_pack, exectool, opciones_es
 
-VERSION = '1.0'
+VERSION = '1.1'
 DISCORD = 'https://discord.gg/NV8TbQQ7B'
 CLAVE_ACTA = 'Dies irae ~Acta est Fabula~'
 CLAVE_AM = 'Dies irae ~Amantes amentes~'
@@ -26,6 +27,9 @@ MD5_EXEC_ACTA = 'cca54ea1e9d2b34dbbbe02487f0c50a2'      # data/system/exec.dat d
 MD5_PATCH_EN = '5a10d56489845df66b139e922cb0a1df'       # data/system/patch.en.dat de data4.cn.dat
 VIDEO_ACTA = 'data/picture/event/mv_01e.webm'
 VIDEO_AM = 'data/picture/event/mv_01.webm'
+CLAVE_KB = 'Dies irae ~Interview with Kaziklu Bey~ (Steam)'
+MD5_EXEC_KB = '76823a221e969aea8d8e27dfcf54e0d4'        # data/system/exec.dat de data.dat (Kaziklu Bey, Steam)
+MD5_GLOS_KB = '2e8106b6fc897c1e3114e98e3e7e6ec7'        # data/extra/glos.csv (glosario del menú)
 csv.field_size_limit(min(sys.maxsize, 2 ** 31 - 1))
 
 def log(*a):
@@ -39,6 +43,7 @@ def carpeta_datos():
 
 def leer_es(nombre):
     p = os.path.join(carpeta_datos(), nombre); m = {}
+    if not os.path.isfile(p): p = os.path.join(BASE, 'datos', nombre)
     with open(p, encoding='utf-8-sig', newline='') as f:
         for r in csv.DictReader(f, delimiter='\t'):
             if r.get('id', '').strip().isdigit() and (r.get('espanol') or '').strip():
@@ -89,10 +94,18 @@ def estado(juego):
     e['acta'] = os.path.isfile(f('malie_fabula.exe')) and os.path.isfile(f('data4.dat'))
     e['acta_es'] = os.path.isfile(f('data5.dat'))
     e['amantes_es'] = os.path.isfile(f('data4.cn.ORIGINAL.dat'))
+    e['kb'] = os.path.isfile(f('malie.exe')) and os.path.isfile(f('data.dat')) and es_kb(juego)
+    e['kb_es'] = os.path.isfile(f('data2.dat'))
     return e
+
+def es_kb(juego):
+    try: return b'Kaziklu' in open(os.path.join(juego, 'malie.ini'), 'rb').read()
+    except OSError: return False
 
 def texto_estado(e):
     if not e['ok']: return 'No existe la carpeta.'
+    if e['kb']:
+        return 'Interview with Kaziklu Bey: encontrado' + (' — español instalado' if e['kb_es'] else '')
     s = []
     s.append('Amantes amentes (malie.exe): ' + ('encontrado' if e['amantes'] else 'NO encontrado') +
              (' — español instalado' if e['amantes_es'] else ''))
@@ -156,12 +169,45 @@ def instalar_amantes(juego):
     tmp = act + '.armando'; malie_pack.pack(files, CLAVE_AM, tmp); os.replace(tmp, act)
     log('   LISTO: %s' % act)
 
+def instalar_kb(juego):
+    log('== Interview with Kaziklu Bey')
+    d = malie_dat.Dat(os.path.join(juego, 'data.dat')); j = d.find('data/system/exec.dat')
+    if j is None: raise RuntimeError('data.dat no tiene exec.dat: ¿es Kaziklu Bey de Steam?')
+    base = d.data(j); jg = d.find('data/extra/glos.csv'); glos = d.data(jg) if jg is not None else None; d.f.close()
+    if md5(base) != MD5_EXEC_KB:
+        raise RuntimeError('tu data.dat es de otra versión de Kaziklu Bey (md5 %s). Avísanos en Discord.' % md5(base))
+    log('   poniendo el español en el guion...')
+    nuevo, n, malas = poner_espanol(base, leer_es('kb_es.tsv'))
+    log('   mensajes en español: %d%s' % (n, ('  (con marcas mal, se quedaron en inglés: %d)' % len(malas)) if malas else ''))
+    files = {'data/system/exec.dat': nuevo}
+    if glos is not None and md5(glos) == MD5_GLOS_KB:
+        import io
+        filas = list(csv.reader(io.StringIO(glos.decode('utf-8-sig'))))
+        p = os.path.join(carpeta_datos(), 'kb_glos_es.tsv')
+        if not os.path.isfile(p): p = os.path.join(BASE, 'datos', 'kb_glos_es.tsv')
+        with open(p, encoding='utf-8-sig', newline='') as f:
+            for r in csv.DictReader(f, delimiter='\t'):
+                i = int(r['fila'])
+                if 0 <= i < len(filas) and r['espanol'].strip(): filas[i][0] = r['espanol'].replace('{n}', '\n')
+        out = io.StringIO(); csv.writer(out, lineterminator='\n').writerows(filas)
+        files['data/extra/glos.csv'] = b'\xef\xbb\xbf' + out.getvalue().encode('utf-8'); log('   glosario del menú en español')
+    else: log('   AVISO: el glosario de tu juego es distinto; se queda en inglés')
+    d2 = os.path.join(juego, 'data2.dat')
+    if os.path.isfile(d2): shutil.copy2(d2, d2 + '.anterior')
+    log('   armando data2.dat (cifrado)...')
+    tmp = d2 + '.armando'; malie_pack.pack(files, CLAVE_KB, tmp); os.replace(tmp, d2)
+    log('   LISTO: %s' % d2)
+
 def instalar(juego, solo=None):
     e = estado(juego)
     if not e['ok']: raise RuntimeError('no existe la carpeta: %s' % juego)
     try: import numpy  # noqa
     except Exception: log('AVISO: sin numpy el cifrado es lento (puede tardar 10-30 min). En Windows usa el .exe.')
     hecho = False
+    if e['kb'] or solo == 'kb':
+        if not e['kb']: raise RuntimeError('en esa carpeta no está Kaziklu Bey (malie.exe + data.dat).')
+        instalar_kb(juego)
+        log('\nTerminado. Para quitar la traducción: «Quitar traducción» (renombra data2.dat).'); return
     if solo in (None, 'amantes'):
         if e['amantes']: instalar_amantes(juego); hecho = True
         else: log('No encontré malie.exe/data4.cn.dat: se salta Amantes.')
@@ -173,6 +219,9 @@ def instalar(juego, solo=None):
 
 def quitar(juego):
     d5 = os.path.join(juego, 'data5.dat'); act = os.path.join(juego, 'data4.cn.dat'); orig = os.path.join(juego, 'data4.cn.ORIGINAL.dat')
+    d2 = os.path.join(juego, 'data2.dat')
+    if es_kb(juego) and os.path.isfile(d2):
+        os.replace(d2, d2 + '.desinstalado'); log('Kaziklu Bey: data2.dat renombrado a data2.dat.desinstalado')
     if os.path.isfile(d5):
         os.replace(d5, d5 + '.desinstalado'); log('Acta: data5.dat renombrado a data5.dat.desinstalado')
     if os.path.isfile(orig):
@@ -182,7 +231,7 @@ def quitar(juego):
 # ---------------------------------------------------------------- revisar datos (para quien edite la traducción)
 def revisar():
     malos = 0
-    for nombre in ('acta_es.tsv', 'amantes_es.tsv'):
+    for nombre in ('acta_es.tsv', 'amantes_es.tsv', 'kb_es.tsv'):
         es = leer_es(nombre)
         for k, t in es.items():
             e = []

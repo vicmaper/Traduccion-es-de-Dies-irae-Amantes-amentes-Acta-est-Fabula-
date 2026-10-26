@@ -1,9 +1,11 @@
 # Dies irae — Traducción al español
 
-Traducción no oficial al español de **Dies irae ~Amantes amentes~** (Steam) y de **Dies irae ~Acta est Fabula~**
-(el parche R18 oficial para la versión de Steam). Hecha por fans; no tiene relación con light ni con JAST.
+Traducción no oficial al español de **Dies irae ~Amantes amentes~** (Steam), de **Dies irae ~Acta est Fabula~**
+(el parche R18 oficial para la versión de Steam) y de **Dies irae ~Interview with Kaziklu Bey~** (Steam).
+Hecha por fans; no tiene relación con light ni con JAST.
 
 - Guion completo de las dos versiones, decisiones y nombres de la caja de nombre en español.
+- Interview with Kaziklu Bey: guion completo y glosario del menú en español.
 - La interfaz (menús, configuración) se queda en inglés.
 - El kit **no trae archivos ni texto del juego**: necesitas tu copia de Steam. El kit lee tus archivos,
   pone el español encima y guarda respaldo de lo que cambia.
@@ -23,6 +25,11 @@ Carpeta del juego: en Steam, clic derecho en Dies irae → **Administrar → Ver
 | Amantes amentes | botón **Jugar** de Steam | `data4.cn.dat` (el original queda como `data4.cn.ORIGINAL.dat`) |
 | Acta est Fabula | `malie_fabula.exe` | agrega `data5.dat` (no toca nada más) |
 
+| Interview with Kaziklu Bey | botón **Jugar** de Steam | agrega `data2.dat` (no toca nada más) |
+
+Para **Kaziklu Bey** (es otro juego de Steam): pulsa **Buscar Kaziklu Bey** (o **Examinar…** y elige su carpeta)
+y luego **Instalar todo**. El glosario se abre desde el menú del juego (clic derecho o Esc).
+
 Acta est Fabula exige tener **al menos una ruta terminada en Amantes amentes** (lo comprueba el propio juego).
 
 **Quitar traducción** deja todo como estaba. Si Steam actualiza el juego o usas «Verificar integridad de archivos»,
@@ -39,14 +46,15 @@ python kit/di_kit.py quitar   "CARPETA"
 
 ## Steam Deck
 
-Amantes funciona normal. Para Acta est Fabula hay que usar una carpeta aparte y un acceso «que no es de Steam»;
+Amantes y Kaziklu Bey funcionan normal (para Kaziklu Bey basta con copiar el `data2.dat` instalado a la carpeta del
+juego en la Deck, o usar el kit desde la Deck). Para Acta est Fabula hay que usar una carpeta aparte y un acceso «que no es de Steam»;
 los pasos están en [docs/STEAM_DECK.md](docs/STEAM_DECK.md).
 
 ## Corregir la traducción
 
 La pestaña **Editar traducción** muestra el español y, si quieres, el inglés de tu propio juego para comparar.
 Los cambios se guardan en una carpeta `datos` junto al kit; después vuelve a pulsar **Instalar**.
-Los textos están en `kit/datos/` (`acta_es.tsv`, `amantes_es.tsv`, `opciones_nombres.tsv`). Respeta las marcas
+Los textos están en `kit/datos/` (`acta_es.tsv`, `amantes_es.tsv`, `opciones_nombres.tsv`, `kb_es.tsv`, `kb_glos_es.tsv`). Respeta las marcas
 `{end}`, `{v:…}{/v}`, `{u000A}`…: el kit no mete los mensajes cuyas marcas no coincidan con el original.
 
 ## Comunidad
